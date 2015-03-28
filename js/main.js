@@ -8,19 +8,16 @@ window.onload = function() {
 	renderer = new THREE.WebGLRenderer({ antialias: true });
 	document.body.appendChild( renderer.domElement );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	// renderer.setClearColorHex( 0xeeeeee, 1.0 );
 
 	scene = new THREE.Scene();
-	
-	// Add some objects to the scene, one per quadrant
-	meshMaterial = new THREE.MeshBasicMaterial({ color: 0xFF00FF, wireframe: true });
 
+	// sphere
 	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
 	sphere.position.set( 0, 25, 0 );
 	sphere.overdraw = true;
 	scene.add( sphere );
 
-	// Add axes
+	// axes
 	axes = buildAxes( 1000 );
 	scene.add( axes );
 	
