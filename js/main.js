@@ -19,18 +19,22 @@ window.onload = function() {
 	// sphere
 	// var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
 	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
-	sphere.position.set( 0, 25, 0 );
+	sphere.position.set(0, 25, 0);
 	sphere.overdraw = true;
-	scene.add( sphere );
+	scene.add(sphere);
 
 	var geom = new THREE.Geometry();
+	var verts = sphere.geometry.vertices;
+	var faces = sphere.geometry.faces;
 
-	for (var i = 0; i < sphere.geometry.vertices.length; i++) {
-		geom.vertices.push(sphere.geometry.vertices[i]);
+	mobius(verts, faces);
+
+	for (var i = 0; i < verts.length; i++) {
+		geom.vertices.push(verts[i]);
 	};
 
-	for (var i = 0; i < sphere.geometry.faces.length; i++) {
-		geom.faces.push(sphere.geometry.faces[i]);
+	for (var i = 0; i < faces.length; i++) {
+		geom.faces.push(faces[i]);
 	};
 
 	var plane = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({wireframe:true}));
@@ -44,6 +48,10 @@ window.onload = function() {
 	camera();
 	controls();
 	animate();
+
+	function mobius(vertices, faces) {
+
+	}
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -80,7 +88,7 @@ window.onload = function() {
 		requestAnimationFrame(animate);
 	}
 
-	function buildAxes( length ) {
+	function buildAxes(length) {
 		var axes = new THREE.Object3D();
 
 		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( length, 0, 0 ), 0xFF0000, false ) ); // +X
@@ -93,7 +101,7 @@ window.onload = function() {
 		return axes;
 	}
 
-	function buildAxis( src, dst, colorHex, dashed ) {
+	function buildAxis(src, dst, colorHex, dashed) {
 		var geom = new THREE.Geometry(), mat;
 
 		if(dashed) {
