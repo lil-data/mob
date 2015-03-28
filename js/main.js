@@ -19,27 +19,16 @@ window.onload = function() {
 	// sphere
 	// var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
 	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
-	sphere.position.set(0, 25, 0);
+	sphere.position.set(0, 0, 0);
 	sphere.overdraw = true;
 	scene.add(sphere);
 
-	var geom = new THREE.Geometry();
-	var verts = sphere.geometry.vertices;
-	var faces = sphere.geometry.faces;
+	var pSphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
+	pSphere.position.set(0, 0, 0);
+	pSphere.overdraw = true;
+	scene.add(pSphere);
 
-	mobius(verts, faces);
-
-	for (var i = 0; i < verts.length; i++) {
-		geom.vertices.push(verts[i]);
-	};
-
-	for (var i = 0; i < faces.length; i++) {
-		geom.faces.push(faces[i]);
-	};
-
-	var plane = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({wireframe:true}));
-	// plane.position.set( 0, 25, 0 );
-	scene.add(plane);
+	mobius(pSphere.geometry.vertices, pSphere.geometry.faces);
 
 	// axes
 	axes = buildAxes( 1000 );
@@ -49,13 +38,35 @@ window.onload = function() {
 	controls();
 	animate();
 
-	function mobius(vertices, faces) {
+	function mobius(v, f) {
+		for (var i = 0; i < v.length; i++) {
+			// [x,y] = [(x/1-z),(y/1-z)]
+			// v[i].x = v[i].x/1-v[i].z;
+			// v[i].y = v[i].y/1-v[i].z;
+			// v[i].z = 0;
 
+			// [x,z] = [(x/1-y),(z/1-y)]
+			v[i].x = v[i].x/1-v[i].y;
+			v[i].z = v[i].z/1-v[i].y;
+			v[i].y = 0;
+		};
+
+		for (var i = 0; i < f.length; i++) {
+			// [x,y] = [(x/1-z),(y/1-z)]
+			// f[i].x = f[i].x/1-f[i].z;
+			// f[i].y = f[i].y/1-f[i].z;
+			// f[i].z = 0;
+
+			// [x,z] = [(x/1-y),(z/1-y)]
+			f[i].x = f[i].x/1-f[i].y;
+			f[i].z = f[i].z/1-f[i].y;
+			f[i].y = 0;
+		};
 	}
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.set( 30, 50, 120 );
+		camera.position.set(-100, -75, -100);
 		camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
 	}
 
@@ -86,17 +97,18 @@ window.onload = function() {
 		stats.end();
 
 		requestAnimationFrame(animate);
+		console.log(camera.position);
 	}
 
 	function buildAxes(length) {
 		var axes = new THREE.Object3D();
 
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( length, 0, 0 ), 0xFF0000, false ) ); // +X
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( -length, 0, 0 ), 0xFF0000, true) ); // -X
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, length, 0 ), 0x00FF00, false ) ); // +Y
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, -length, 0 ), 0x00FF00, true ) ); // -Y
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, length ), 0x0000FF, false ) ); // +Z
-		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -length ), 0x0000FF, true ) ); // -Z
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(length, 0, 0), 0xFF0000, false)); // +X
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(-length, 0, 0), 0xFF0000, true)); // -X
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, length, 0), 0x00FF00, false)); // +Y
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -length, 0), 0x00FF00, true)); // -Y
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, length), 0x0000FF, false)); // +Z
+		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -length), 0x0000FF, true)); // -Z
 
 		return axes;
 	}
