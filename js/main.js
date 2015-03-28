@@ -24,27 +24,26 @@ window.onload = function() {
 	axes = buildAxes( 1000 );
 	scene.add( axes );
 	
-	// We need a camera to look at the scene!
-	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-	camera.position.set( 30, 50, 120 );
-	camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
-	
-	// And some sort of controls to move around
-	// We'll use one of THREE's provided control classes for simplicity
-	controls = new THREE.TrackballControls( camera );
-	controls.rotateSpeed = 1.0;
-	controls.zoomSpeed = 0.2;
-	controls.panSpeed = 0.8;
-
-	controls.noZoom = false;
-	controls.noPan = false;
-
-	controls.staticMoving = true;
-	controls.dynamicDampingFactor = 0.3;
-
-
-	// and go!
+	camera();
+	controls();
 	animate();
+	
+	function camera() {
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+		camera.position.set( 30, 50, 120 );
+		camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+	}
+
+	function controls() {
+		controls = new THREE.TrackballControls( camera );
+		controls.rotateSpeed = 1.0;
+		controls.zoomSpeed = 0.2;
+		controls.panSpeed = 0.8;
+		controls.noZoom = false;
+		controls.noPan = false;
+		controls.staticMoving = true;
+		controls.dynamicDampingFactor = 0.3;
+	}
 
 	function animate() {
 		requestAnimationFrame( animate );
