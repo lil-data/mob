@@ -12,10 +12,25 @@ window.onload = function() {
 	scene = new THREE.Scene();
 
 	// sphere
-	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
+	// var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
+	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
 	sphere.position.set( 0, 25, 0 );
 	sphere.overdraw = true;
 	scene.add( sphere );
+
+	var geom = new THREE.Geometry();
+
+	for (var i = 0; i < sphere.geometry.vertices.length; i++) {
+		geom.vertices.push(sphere.geometry.vertices[i]);
+	};
+
+	for (var i = 0; i < sphere.geometry.faces.length; i++) {
+		geom.faces.push(sphere.geometry.faces[i]);
+	};
+
+	var plane = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({wireframe:true}));
+	// plane.position.set( 0, 25, 0 );
+	scene.add(plane);
 
 	// axes
 	axes = buildAxes( 1000 );
