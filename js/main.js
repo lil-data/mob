@@ -4,6 +4,7 @@ window.onload = function() {
 	var stats = new Stats();
 	stats.setMode(2);
 	document.body.appendChild(stats.domElement);
+	document.getElementById("stats").style.position = "absolute";
 
 	document.addEventListener("keydown", onKeyDown); // keyboard input handler
 
