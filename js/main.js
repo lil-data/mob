@@ -1,9 +1,13 @@
 window.onload = function() {
-	var renderer,
-		scene,
-		camera,
-		controls,
-		meshMaterial;
+
+	// fps display
+	var stats = new Stats();
+	stats.setMode(2);
+	document.body.appendChild(stats.domElement);
+
+	document.addEventListener("keydown", onKeyDown); // keyboard input handler
+
+	var renderer, scene, camera, controls, meshMaterial;
 
 	renderer = new THREE.WebGLRenderer({ antialias: true });
 	document.body.appendChild( renderer.domElement );
@@ -35,11 +39,11 @@ window.onload = function() {
 	// axes
 	axes = buildAxes( 1000 );
 	scene.add( axes );
-	
+
 	camera();
 	controls();
 	animate();
-	
+
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 		camera.position.set( 30, 50, 120 );
@@ -57,10 +61,22 @@ window.onload = function() {
 		controls.dynamicDampingFactor = 0.3;
 	}
 
+	function onKeyDown(event) {
+		if (event.keyCode == 37) {
+			console.log('Left was pressed');
+		}
+		else if(event.keyCode == 39) {
+			console.log('Right was pressed');
+		}
+	}
+
 	function animate() {
-		requestAnimationFrame( animate );
+		stats.begin();
 		controls.update();
-		renderer.render( scene, camera );
+		renderer.render(scene, camera);
+		stats.end();
+
+		requestAnimationFrame(animate);
 	}
 
 	function buildAxes( length ) {
@@ -77,7 +93,7 @@ window.onload = function() {
 	}
 
 	function buildAxis( src, dst, colorHex, dashed ) {
-		var geom = new THREE.Geometry(), mat; 
+		var geom = new THREE.Geometry(), mat;
 
 		if(dashed) {
 			mat = new THREE.LineDashedMaterial({ linewidth: 3, color: colorHex, dashSize: 3, gapSize: 3 });
