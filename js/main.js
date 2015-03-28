@@ -1,5 +1,7 @@
 window.onload = function() {
 
+	var isForward = false;
+
 	// fps display
 	var stats = new Stats();
 	stats.setMode(2);
@@ -7,6 +9,7 @@ window.onload = function() {
 	document.getElementById("stats").style.position = "absolute";
 
 	document.addEventListener("keydown", onKeyDown); // keyboard input handler
+	document.addEventListener("keyup", onKeyUp); // keyboard input handler
 
 	var renderer, scene, camera, controls, meshMaterial;
 
@@ -15,6 +18,11 @@ window.onload = function() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 	scene = new THREE.Scene();
+
+	var x_axis = new THREE.Vector3(1, 0, 0);
+	var z_axis = new THREE.Vector3(0, 0, 1);
+	var rotate_x = 0.0;
+	var rotate_z = 0.0;
 
 	// sphere
 	// var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
@@ -66,8 +74,8 @@ window.onload = function() {
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.set(-100, -75, -100);
-		camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+		camera.position.set(-20, 100, -100);
+		camera.lookAt( new THREE.Vector3(0, 0, 0) );
 	}
 
 	function controls() {
@@ -81,12 +89,21 @@ window.onload = function() {
 		controls.dynamicDampingFactor = 0.3;
 	}
 
-	function onKeyDown(event) {
-		if (event.keyCode == 37) {
-			console.log('Left was pressed');
+	function onKeyUp(event) {
+		switch (event.keyCode) {
+			case 37: rotate_z = 0; break; // left
+			case 38: rotate_x = 0; break; // up
+			case 39: rotate_z = 0; break; // right
+			case 40: rotate_x = 0; break; // down
 		}
-		else if(event.keyCode == 39) {
-			console.log('Right was pressed');
+	}
+
+	function onKeyDown(event) {
+		switch (event.keyCode) {
+			case 37: rotate_z = 1.0; break; // left
+			case 38: rotate_x = 1.0; break; // up
+			case 39: rotate_z = -1.0; break; // right
+			case 40: rotate_x = -1.0; break; // down
 		}
 	}
 
@@ -95,6 +112,9 @@ window.onload = function() {
 		controls.update();
 		renderer.render(scene, camera);
 		stats.end();
+
+		sphere.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
+		sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
 
 		requestAnimationFrame(animate);
 		console.log(camera.position);
