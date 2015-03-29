@@ -13,9 +13,9 @@ window.onload = function() {
 
 	var renderer, scene, camera, controls, meshMaterial;
 
-	renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer = new THREE.WebGLRenderer({antialias: true});
 	document.body.appendChild( renderer.domElement );
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	scene = new THREE.Scene();
 
@@ -25,22 +25,39 @@ window.onload = function() {
 	var rotate_z = 0.0;
 
 	// sphere
-	// var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshNormalMaterial());
-	var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
-	sphere.position.set(0, 0, 0);
-	sphere.overdraw = true;
+	radius = 25;
+	var sphere = new THREE.Mesh(
+		new THREE.SphereGeometry(radius, 2, 2),
+		new THREE.MeshBasicMaterial({
+			wireframe: true,
+			wireframeLinewidth: 5}));
+	sphere.position.set(0, radius, 0);
+	console.log(sphere.geometry.vertices.length);
 	scene.add(sphere);
 
-	var pSphere = new THREE.Mesh(new THREE.SphereGeometry(25, 25, 25), new THREE.MeshBasicMaterial({wireframe:true}));
-	pSphere.position.set(0, 0, 0);
-	pSphere.overdraw = true;
-	scene.add(pSphere);
+	var floor = new THREE.Geometry();
+	var scale = 100.0;
 
-	mobius(pSphere.geometry.vertices, pSphere.geometry.faces);
+	// for (i = 0; i < sphere.geometry.vertices)
+	for (i = -2; i < 3; ++i) {
+		for (j = -2; j < 3; ++j) {
+			floor.vertices.push(new THREE.Vector3(scale*j, 0, scale*i));
+		}
+	}
+
+	for (k = 0; k < 16; ++k) {
+		i = k + Math.floor(k/4);
+		floor.faces.push(new THREE.Face3(i, i+1, i+5));
+	}
+
+	scene.add(
+		new THREE.Mesh(
+			floor,
+			new THREE.MeshBasicMaterial({wireframe: true})));
 
 	// axes
-	axes = buildAxes( 1000 );
-	scene.add( axes );
+	axes = buildAxes(1000);
+	scene.add(axes);
 
 	camera();
 	controls();
@@ -74,7 +91,7 @@ window.onload = function() {
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.set(-20, 100, -100);
+		camera.position.set(-5, 100, -100);
 		camera.lookAt( new THREE.Vector3(0, 0, 0) );
 	}
 
@@ -117,7 +134,6 @@ window.onload = function() {
 		sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
 
 		requestAnimationFrame(animate);
-		console.log(camera.position);
 	}
 
 	function buildAxes(length) {
