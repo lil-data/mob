@@ -1,18 +1,16 @@
 window.onload = function() {
 
-	var isForward = false;
-
 	// fps display
 	var stats = new Stats();
 	stats.setMode(2);
 	document.body.appendChild(stats.domElement);
 	document.getElementById("stats").style.position = "absolute";
 
-	document.addEventListener("keydown", onKeyDown); // keyboard input handler
-	document.addEventListener("keyup", onKeyUp); // keyboard input handler
+	// keyboard input handlers
+	document.addEventListener("keydown", onKeyDown);
+	document.addEventListener("keyup", onKeyUp);
 
-	var renderer, scene, camera, controls, meshMaterial;
-
+	var renderer, scene, camera, control, meshMaterial;
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	document.body.appendChild( renderer.domElement );
 	renderer.setSize(window.innerWidth, window.innerHeight);
@@ -24,69 +22,75 @@ window.onload = function() {
 	var rotate_x = 0.0;
 	var rotate_z = 0.0;
 
-	// sphere
-	radius = 25;
-	var sphere = new THREE.Mesh(
-		new THREE.SphereGeometry(radius, 2, 2),
-		new THREE.MeshBasicMaterial({
-			wireframe: true,
-			wireframeLinewidth: 5}));
-	sphere.position.set(0, radius, 0);
-	console.log(sphere.geometry.vertices.length);
+	scene.add(buildAxes(1000));
+	// scene.add(create_floor());
+	sphere = create_sphere();
 	scene.add(sphere);
 
-	var floor = new THREE.Geometry();
-	var scale = 100.0;
+	// Create points
+	vertices = sphere.geometry.vertices;
+	var geom = new THREE.Geometry();
+	for (i = 0; i < vertices.length; ++i) {
+		x = vertices[i].x;
+		y = vertices[i].y;
+		z = vertices[i].z;
 
-	// for (i = 0; i < sphere.geometry.vertices)
-	for (i = -2; i < 3; ++i) {
-		for (j = -2; j < 3; ++j) {
-			floor.vertices.push(new THREE.Vector3(scale*j, 0, scale*i));
-		}
+		if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) continue;
+
+		theta = Math.atan2(z, x);
+
+		phi = Math.atan2(25-y, Math.sqrt(x*x+z*z));
+		console.log(theta, phi);
+
+		cot_phi = 1 / Math.tan(phi/2);
+		a = cot_phi * Math.sin(theta);
+		b = cot_phi * Math.cos(theta);
+
+		geom.vertices.push(new THREE.Vector3(b, -25, a));
 	}
 
-	for (k = 0; k < 16; ++k) {
-		i = k + Math.floor(k/4);
-		floor.faces.push(new THREE.Face3(i, i+1, i+5));
-	}
+	material = new THREE.PointCloudMaterial({
+		size: 2,
+		color: 0xffff0f});
+	var pointcloud = new THREE.PointCloud(geom, material );
+	scene.add(pointcloud);
 
-	scene.add(
-		new THREE.Mesh(
-			floor,
-			new THREE.MeshBasicMaterial({wireframe: true})));
-
-	// axes
-	axes = buildAxes(1000);
-	scene.add(axes);
 
 	camera();
 	controls();
 	animate();
 
-	function mobius(v, f) {
-		for (var i = 0; i < v.length; i++) {
-			// [x,y] = [(x/1-z),(y/1-z)]
-			// v[i].x = v[i].x/1-v[i].z;
-			// v[i].y = v[i].y/1-v[i].z;
-			// v[i].z = 0;
+	function create_sphere() {
+		radius = 25;
 
-			// [x,z] = [(x/1-y),(z/1-y)]
-			v[i].x = v[i].x/1-v[i].y;
-			v[i].z = v[i].z/1-v[i].y;
-			v[i].y = 0;
-		};
+		geometry = new THREE.SphereGeometry(radius, 25, 25);
+		material = new THREE.MeshBasicMaterial({
+				wireframe: true,
+				wireframeLinewidth: 3
+			});
 
-		for (var i = 0; i < f.length; i++) {
-			// [x,y] = [(x/1-z),(y/1-z)]
-			// f[i].x = f[i].x/1-f[i].z;
-			// f[i].y = f[i].y/1-f[i].z;
-			// f[i].z = 0;
+		sphere = new THREE.Mesh(geometry, material);
+		// sphere.position.set(0, radius, 0);
+		sphere.geometry.mergeVertices();
+		return sphere;
+	}
 
-			// [x,z] = [(x/1-y),(z/1-y)]
-			f[i].x = f[i].x/1-f[i].y;
-			f[i].z = f[i].z/1-f[i].y;
-			f[i].y = 0;
-		};
+	function create_floor() {
+		floor = new THREE.Geometry();
+		scale = 100.0;
+
+		for (i = -2; i < 3; ++i) {
+			for (j = -2; j < 3; ++j) {
+				floor.vertices.push(new THREE.Vector3(scale*j, 0, scale*i));
+			}
+		}
+
+		for (k = 0; k < 16; ++k) {
+			i = k + Math.floor(k/4);
+			floor.faces.push(new THREE.Face3(i, i+1, i+5));
+		}
+
+		return new THREE.Mesh(floor, new THREE.MeshBasicMaterial({wireframe: true}));
 	}
 
 	function camera() {
@@ -96,14 +100,14 @@ window.onload = function() {
 	}
 
 	function controls() {
-		controls = new THREE.TrackballControls( camera );
-		controls.rotateSpeed = 1.0;
-		controls.zoomSpeed = 0.2;
-		controls.panSpeed = 0.8;
-		controls.noZoom = false;
-		controls.noPan = false;
-		controls.staticMoving = true;
-		controls.dynamicDampingFactor = 0.3;
+		control = new THREE.TrackballControls( camera );
+		control.rotateSpeed = 1.0;
+		control.zoomSpeed = 0.2;
+		control.panSpeed = 0.8;
+		control.noZoom = false;
+		control.noPan = false;
+		control.staticMoving = true;
+		control.dynamicDampingFactor = 0.3;
 	}
 
 	function onKeyUp(event) {
@@ -126,7 +130,7 @@ window.onload = function() {
 
 	function animate() {
 		stats.begin();
-		controls.update();
+		control.update();
 		renderer.render(scene, camera);
 		stats.end();
 
@@ -166,4 +170,4 @@ window.onload = function() {
 
 		return axis;
 	}
-}
+};
