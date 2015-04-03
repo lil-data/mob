@@ -28,25 +28,22 @@ window.onload = function() {
 	scene.add(sphere);
 
 	var points = create_points(sphere);
-
-	material = new THREE.PointCloudMaterial({
-		size: 2,
-		color: 0xffff0f});
-	var pointcloud = new THREE.PointCloud(points, material);
-	scene.add(pointcloud);
+	scene.add(points);
 
 	camera();
 	controls();
 	animate();
 
 	function create_points(sphere) {
-		var geom = new THREE.Geometry();
+		var geom = sphere.geometry.clone();
 
-		vertices = sphere.geometry.vertices;
+		vertices = geom.vertices;
+
 		for (j = 0; j < vertices.length; ++j) {
-			x = vertices[j].x;
-			y = vertices[j].y + sphere_radius;
-			z = vertices[j].z;
+			vertex = vertices[j];
+			x = vertex.x;
+			y = vertex.y + sphere_radius;
+			z = vertex.z;
 
 			if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) {
 				continue;
@@ -59,17 +56,26 @@ window.onload = function() {
 			a = r * Math.sin(theta);
 			b = r * Math.cos(theta);
 
-			geom.vertices.push(new THREE.Vector3(a, 0, b));
+			vertex.x = a;
+			vertex.y = 0;
+			vertex.z = b;
+			vertices[j] = vertex;
 		}
-		return geom;
+
+		material = new THREE.MeshBasicMaterial({
+			wireframe: true,
+			wireframeLinewidth: 3,
+			color: 0xffc425
+		});
+		return new THREE.Mesh(geom, material);
 	}
 
 	function create_sphere(radius) {
-		geometry = new THREE.SphereGeometry(radius, 5, 3);
+		geometry = new THREE.SphereGeometry(radius, 5, 5);
 		material = new THREE.MeshBasicMaterial({
-				wireframe: true,
-				wireframeLinewidth: 3
-			});
+			wireframe: true,
+			wireframeLinewidth: 3
+		});
 
 		sphere = new THREE.Mesh(geometry, material);
 		sphere.position.set(0, radius, 0);
@@ -94,15 +100,6 @@ window.onload = function() {
 
 		return new THREE.Mesh(floor, new THREE.MeshBasicMaterial({wireframe: true}));
 	}
-
-	// basic gui
-	// var gui = new dat.GUI();
-
-	// var obj = {
-	// 	num: 23
-	// };
-
-	// gui.add(obj, "num").min(1).max(50).step(1);
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
