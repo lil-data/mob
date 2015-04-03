@@ -23,54 +23,56 @@ window.onload = function() {
 	var rotate_z = 0.0;
 
 	scene.add(buildAxes(1000));
-	// scene.add(create_floor());
-	sphere = create_sphere();
+	var sphere_radius = 10;
+	var sphere = create_sphere(sphere_radius);
 	scene.add(sphere);
 
-	// Create points
-	vertices = sphere.geometry.vertices;
-	var geom = new THREE.Geometry();
-	for (i = 0; i < vertices.length; ++i) {
-		x = vertices[i].x;
-		y = vertices[i].y;
-		z = vertices[i].z;
-
-		if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) continue;
-
-		theta = Math.atan2(z, x);
-
-		phi = Math.atan2(25-y, Math.sqrt(x*x+z*z));
-		console.log(theta, phi);
-
-		cot_phi = 1 / Math.tan(phi/2);
-		a = cot_phi * Math.sin(theta);
-		b = cot_phi * Math.cos(theta);
-
-		geom.vertices.push(new THREE.Vector3(b, -25, a));
-	}
+	var points = create_points(sphere);
 
 	material = new THREE.PointCloudMaterial({
 		size: 2,
 		color: 0xffff0f});
-	var pointcloud = new THREE.PointCloud(geom, material );
+	var pointcloud = new THREE.PointCloud(points, material);
 	scene.add(pointcloud);
-
 
 	camera();
 	controls();
 	animate();
 
-	function create_sphere() {
-		radius = 25;
+	function create_points(sphere) {
+		vertices = sphere.geometry.vertices;
 
-		geometry = new THREE.SphereGeometry(radius, 25, 25);
+		var geom = new THREE.Geometry();
+		for (i = 0; i < vertices.length; ++i) {
+			x = vertices[i].x;
+			y = vertices[i].y + sphere_radius;
+			z = vertices[i].z;
+
+			// ignore infinities
+			if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) {
+				continue;
+			}
+
+			theta = Math.atan2(z, x);
+			phi = Math.atan2(sphere_radius-y, Math.sqrt(x*x+z*z));
+			cot_phi = 1 / Math.tan(phi/2);
+			a = cot_phi * Math.sin(theta) * sphere_radius;
+			b = cot_phi * Math.cos(theta) * sphere_radius;
+
+			geom.vertices.push(new THREE.Vector3(b, 0, a));
+		}
+		return geom;
+	}
+
+	function create_sphere(radius) {
+		geometry = new THREE.SphereGeometry(radius, 15, 15);
 		material = new THREE.MeshBasicMaterial({
 				wireframe: true,
 				wireframeLinewidth: 3
 			});
 
 		sphere = new THREE.Mesh(geometry, material);
-		// sphere.position.set(0, radius, 0);
+		sphere.position.set(0, radius, 0);
 		sphere.geometry.mergeVertices();
 		return sphere;
 	}
@@ -131,13 +133,15 @@ window.onload = function() {
 	function animate() {
 		stats.begin();
 		control.update();
+
+		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
+			sphere.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
+			sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
+			// pointcloud.geometry = create_points(sphere);
+		}
 		renderer.render(scene, camera);
-		stats.end();
-
-		sphere.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
-		sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
-
 		requestAnimationFrame(animate);
+		stats.end();
 	}
 
 	function buildAxes(length) {
