@@ -48,24 +48,23 @@ window.onload = function() {
 			y = vertices[i].y + sphere_radius;
 			z = vertices[i].z;
 
-			// ignore infinities
 			if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) {
 				continue;
 			}
 
 			theta = Math.atan2(z, x);
-			phi = Math.atan2(sphere_radius-y, Math.sqrt(x*x+z*z));
+			phi = Math.atan2(1-y, Math.sqrt(x*x+z*z));
 			cot_phi = 1 / Math.tan(phi/2);
 			a = cot_phi * Math.sin(theta) * sphere_radius;
 			b = cot_phi * Math.cos(theta) * sphere_radius;
 
-			geom.vertices.push(new THREE.Vector3(b, 0, a));
+			geom.vertices.push(new THREE.Vector3(a, 0, b));
 		}
 		return geom;
 	}
 
 	function create_sphere(radius) {
-		geometry = new THREE.SphereGeometry(radius, 15, 15);
+		geometry = new THREE.SphereGeometry(radius, 3, 3);
 		material = new THREE.MeshBasicMaterial({
 				wireframe: true,
 				wireframeLinewidth: 3
@@ -94,6 +93,15 @@ window.onload = function() {
 
 		return new THREE.Mesh(floor, new THREE.MeshBasicMaterial({wireframe: true}));
 	}
+
+	// basic gui
+	// var gui = new dat.GUI();
+
+	// var obj = {
+	// 	num: 23
+	// };
+
+	// gui.add(obj, "num").min(1).max(50).step(1);
 
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
