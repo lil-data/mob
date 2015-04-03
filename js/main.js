@@ -40,23 +40,24 @@ window.onload = function() {
 	animate();
 
 	function create_points(sphere) {
-		vertices = sphere.geometry.vertices;
-
 		var geom = new THREE.Geometry();
-		for (i = 0; i < vertices.length; ++i) {
-			x = vertices[i].x;
-			y = vertices[i].y + sphere_radius;
-			z = vertices[i].z;
+
+		vertices = sphere.geometry.vertices;
+		for (j = 0; j < vertices.length; ++j) {
+			x = vertices[j].x;
+			y = vertices[j].y + sphere_radius;
+			z = vertices[j].z;
 
 			if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) {
 				continue;
 			}
 
-			theta = Math.atan2(z, x);
-			phi = Math.atan2(1-y, Math.sqrt(x*x+z*z));
-			cot_phi = 1 / Math.tan(phi/2);
-			a = cot_phi * Math.sin(theta) * sphere_radius;
-			b = cot_phi * Math.cos(theta) * sphere_radius;
+			phi = Math.atan2(Math.sqrt(x*x+z*z), 2*sphere_radius-y);
+			r = 2*sphere_radius*Math.tan(phi);
+
+			theta = Math.atan2(x, z);
+			a = r * Math.sin(theta);
+			b = r * Math.cos(theta);
 
 			geom.vertices.push(new THREE.Vector3(a, 0, b));
 		}
@@ -64,7 +65,7 @@ window.onload = function() {
 	}
 
 	function create_sphere(radius) {
-		geometry = new THREE.SphereGeometry(radius, 3, 3);
+		geometry = new THREE.SphereGeometry(radius, 5, 3);
 		material = new THREE.MeshBasicMaterial({
 				wireframe: true,
 				wireframeLinewidth: 3
