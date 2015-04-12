@@ -23,22 +23,29 @@ window.onload = function() {
 	var rotate_z = 0.0;
 
 	size = 10;
-	var box_geo = new THREE.BoxGeometry( size, size, size, size, size, size );
-	for ( var i = 0; i < box_geo.faces.length; i ++ ) {
-    	box_geo.faces[ i ].color.setHex( i/box_geo.faces.length * 0xffffff );
+	var box = new THREE.BoxGeometry(size, size, size, size, size, size);
+	for (var i = 0; i < box.faces.length; i++) {
+    	box.faces[i].color.setHex(i/box.faces.length * 0xffffff);
 	}
-	var mat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
-	var cube = new THREE.Mesh(box_geo,mat);
+	var mat = new THREE.MeshBasicMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
+	var cube = new THREE.Mesh(box,mat);
 	cube.position.set(0, size, 0);
 	scene.add(cube);
+
+	var projcubegeom = proj_cube_sphere(cube.geometry.clone(), size);
+	var projcubemat = cube.material.clone();
+	projcubemat.transparent = true;
+	projcubemat.opacity = 0.5;
+	var projcube = new THREE.Mesh(projcubegeom, projcubemat);
+	projcube.position.set(0, size, 0);
+	scene.add(projcube);
 
 	scene.add(buildAxes(1000));
 	var sphere_radius = 10;
 	var sphere = create_sphere(sphere_radius);
-	scene.add(sphere);
+	// scene.add(sphere);
 
-	var geom = sphere.geometry.clone();
-	create_points(geom);
+	var geom = proj_sphere_plain(projcube.geometry.clone());
 	matPoints = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
 	matPoints = sphere.material.clone();
 	matPoints.opacity = 1;
@@ -50,7 +57,7 @@ window.onload = function() {
 	controls();
 	animate();
 
-	function create_points(geom) {
+	function proj_sphere_plain(geom) {
 
 		vertices = geom.vertices;
 
@@ -76,7 +83,28 @@ window.onload = function() {
 			vertex.z = b;
 			vertices[j] = vertex;
 		}
+		return geom;
+	}
 
+	function proj_cube_sphere(geom, size) {
+		
+		vertices = geom.vertices;
+
+		for (j = 0; j < vertices.length; ++j) {
+			vertex = vertices[j];
+			x = vertex.x/size*2;
+			y = vertex.y/size*2;
+			z = vertex.z/size*2;
+
+			xx = x*Math.sqrt(1-((y*y)/2)-((z*z)/2)+((y*y*z*z)/3));
+			yy = y*Math.sqrt(1-((z*z)/2)-((x*x)/2)+((x*x*z*z)/3));
+			zz = z*Math.sqrt(1-((x*x)/2)-((y*y)/2)+((y*y*x*x)/3));
+
+			vertex.x = xx*size;
+			vertex.y = yy*size;
+			vertex.z = zz*size;
+			vertices[j] = vertex;
+		}
 		return geom;
 	}
 
@@ -94,22 +122,11 @@ window.onload = function() {
 		return sphere;
 	}
 
-	function create_floor() {
-		floor = new THREE.Geometry();
-		scale = 100.0;
-
-		for (i = -2; i < 3; ++i) {
-			for (j = -2; j < 3; ++j) {
-				floor.vertices.push(new THREE.Vector3(scale*j, 0, scale*i));
-			}
+	function rotate() {
+		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
+			cube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
+			cube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
 		}
-
-		for (k = 0; k < 16; ++k) {
-			i = k + Math.floor(k/4);
-			floor.faces.push(new THREE.Face3(i, i+1, i+5));
-		}
-
-		return new THREE.Mesh(floor, new THREE.MeshBasicMaterial({wireframe: true}));
 	}
 
 	function camera() {
@@ -150,11 +167,7 @@ window.onload = function() {
 	function animate() {
 		stats.begin();
 		control.update();
-
-		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
-			sphere.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
-			sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
-		}
+		rotate();
 		renderer.render(scene, camera);
 		requestAnimationFrame(animate);
 		stats.end();
