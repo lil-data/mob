@@ -22,20 +22,35 @@ window.onload = function() {
 	var rotate_x = 0.0;
 	var rotate_z = 0.0;
 
+	size = 10;
+	var box_geo = new THREE.BoxGeometry( size, size, size, size, size, size );
+	for ( var i = 0; i < box_geo.faces.length; i ++ ) {
+    	box_geo.faces[ i ].color.setHex( i/box_geo.faces.length * 0xffffff );
+	}
+	var mat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+	var cube = new THREE.Mesh(box_geo,mat);
+	cube.position.set(0, size, 0);
+	scene.add(cube);
+
 	scene.add(buildAxes(1000));
 	var sphere_radius = 10;
 	var sphere = create_sphere(sphere_radius);
 	scene.add(sphere);
 
-	var points = create_points(sphere);
+	var geom = sphere.geometry.clone();
+	create_points(geom);
+	matPoints = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+	matPoints = sphere.material.clone();
+	matPoints.opacity = 1;
+	var points = new THREE.Mesh(geom, matPoints);
+	points.rotateOnAxis(z_axis, Math.PI);
 	scene.add(points);
-
+	
 	camera();
 	controls();
 	animate();
 
-	function create_points(sphere) {
-		var geom = sphere.geometry.clone();
+	function create_points(geom) {
 
 		vertices = geom.vertices;
 
@@ -62,21 +77,17 @@ window.onload = function() {
 			vertices[j] = vertex;
 		}
 
-		material = new THREE.MeshBasicMaterial({
-			wireframe: true,
-			wireframeLinewidth: 3,
-			color: 0xffc425
-		});
-		return new THREE.Mesh(geom, material);
+		return geom;
 	}
 
 	function create_sphere(radius) {
-		geometry = new THREE.SphereGeometry(radius, 5, 5);
-		material = new THREE.MeshBasicMaterial({
-			wireframe: true,
-			wireframeLinewidth: 3
-		});
-
+		geometry = new THREE.SphereGeometry(radius, 100, 100);
+		for ( var i = 0; i < geometry.faces.length; i ++ ) {
+    		geometry.faces[ i ].color.setHex( i/geometry.faces.length * 0xffffff );
+		}
+		var material = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+		material.transparent = true;
+		material.opacity = 0.5;
 		sphere = new THREE.Mesh(geometry, material);
 		sphere.position.set(0, radius, 0);
 		sphere.geometry.mergeVertices();
@@ -143,7 +154,6 @@ window.onload = function() {
 		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
 			sphere.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
 			sphere.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
-			// pointcloud.geometry = create_points(sphere);
 		}
 		renderer.render(scene, camera);
 		requestAnimationFrame(animate);
