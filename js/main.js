@@ -126,6 +126,8 @@ window.onload = function() {
 		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
 			cube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
 			cube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
+			projcube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
+			projcube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
 		}
 	}
 
