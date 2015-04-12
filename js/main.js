@@ -30,6 +30,7 @@ window.onload = function() {
 	var mat = new THREE.MeshBasicMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
 	var cube = new THREE.Mesh(box,mat);
 	cube.position.set(0, size, 0);
+	cube.matrixAutoUpdate = true;
 	scene.add(cube);
 
 	var projcubegeom = proj_cube_sphere(cube.geometry.clone(), size);
@@ -38,21 +39,21 @@ window.onload = function() {
 	projcubemat.opacity = 0.5;
 	var projcube = new THREE.Mesh(projcubegeom, projcubemat);
 	projcube.position.set(0, size, 0);
+	projcube.matrixAutoUpdate = true;
+
 	scene.add(projcube);
 
 	scene.add(buildAxes(1000));
 	var sphere_radius = 10;
-	var sphere = create_sphere(sphere_radius);
-	// scene.add(sphere);
 
-	var geom = proj_sphere_plain(projcube.geometry.clone());
-	matPoints = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
-	matPoints = sphere.material.clone();
-	matPoints.opacity = 1;
-	var points = new THREE.Mesh(geom, matPoints);
-	points.rotateOnAxis(z_axis, Math.PI);
-	scene.add(points);
-	
+	var plaingeom = proj_sphere_plain(projcube.geometry.clone());
+	plainmat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+	plainmat.opacity = 1;
+	var plain = new THREE.Mesh(plaingeom, plainmat);
+	plain.matrixAutoUpdate = true;
+	plain.rotateOnAxis(z_axis, Math.PI);
+	scene.add(plain);
+
 	camera();
 	controls();
 	animate();
@@ -92,7 +93,7 @@ window.onload = function() {
 
 		for (j = 0; j < vertices.length; ++j) {
 			vertex = vertices[j];
-			x = vertex.x/size*2;
+			x = vertex.x/size*2;	// dont know why *2 but it works
 			y = vertex.y/size*2;
 			z = vertex.z/size*2;
 
@@ -128,6 +129,12 @@ window.onload = function() {
 			cube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
 			projcube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
 			projcube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
+
+			// this does something kind of interesting
+			// for (var i = 0; i < projcube.geometry.vertices.length; i++) {
+			// 	projcube.localToWorld(projcube.geometry.vertices[i]);
+			// };
+			// plain.geometry = proj_sphere_plain(projcube.geometry.clone());
 		}
 	}
 
