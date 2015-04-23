@@ -8,7 +8,6 @@ window.onload = function() {
 
 	// keyboard input handlers
 	document.addEventListener("keydown", onKeyDown);
-	document.addEventListener("keyup", onKeyUp);
 
 	var renderer, scene, camera, control, meshMaterial;
 	renderer = new THREE.WebGLRenderer({antialias: true});
@@ -16,11 +15,6 @@ window.onload = function() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	scene = new THREE.Scene();
-
-	var x_axis = new THREE.Vector3(1, 0, 0);
-	var z_axis = new THREE.Vector3(0, 0, 1);
-	var rotate_x = 0.0;
-	var rotate_z = 0.0;
 
 	size = 10;
 	var box = new THREE.BoxGeometry(size, size, size, size, size, size);
@@ -37,10 +31,10 @@ window.onload = function() {
 	var projcubemat = cube.material.clone();
 	projcubemat.transparent = true;
 	projcubemat.opacity = 0.5;
+
 	var projcube = new THREE.Mesh(projcubegeom, projcubemat);
 	projcube.position.set(0, size, 0);
 	projcube.matrixAutoUpdate = true;
-
 	scene.add(projcube);
 
 	scene.add(buildAxes(1000));
@@ -51,12 +45,16 @@ window.onload = function() {
 	plainmat.opacity = 1;
 	var plain = new THREE.Mesh(plaingeom, plainmat);
 	plain.matrixAutoUpdate = true;
-	plain.rotateOnAxis(z_axis, Math.PI);
+	plain.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI);
 	scene.add(plain);
+
+	var rotationQuaternion = new THREE.Quaternion();
+	var rotationVector = new THREE.Vector3(0, 0, 0);
 
 	camera();
 	controls();
-	animate();
+	gameStep();
+	render();
 
 	function proj_sphere_plain(geom) {
 
@@ -88,7 +86,7 @@ window.onload = function() {
 	}
 
 	function proj_cube_sphere(geom, size) {
-		
+
 		vertices = geom.vertices;
 
 		for (j = 0; j < vertices.length; ++j) {
@@ -123,21 +121,6 @@ window.onload = function() {
 		return sphere;
 	}
 
-	function rotate() {
-		if (Math.abs(rotate_x) > 0 || Math.abs(rotate_z) > 0) {
-			cube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
-			cube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
-			projcube.rotateOnAxis(x_axis, rotate_x*3.0/360.0*2.0*Math.PI);
-			projcube.rotateOnAxis(z_axis, rotate_z*3.0/360.0*2.0*Math.PI);
-
-			// this does something kind of interesting
-			// for (var i = 0; i < projcube.geometry.vertices.length; i++) {
-			// 	projcube.localToWorld(projcube.geometry.vertices[i]);
-			// };
-			// plain.geometry = proj_sphere_plain(projcube.geometry.clone());
-		}
-	}
-
 	function camera() {
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 		camera.position.set(-5, 100, -100);
@@ -155,31 +138,44 @@ window.onload = function() {
 		control.dynamicDampingFactor = 0.3;
 	}
 
-	function onKeyUp(event) {
-		switch (event.keyCode) {
-			case 37: rotate_z = 0; break; // left
-			case 38: rotate_x = 0; break; // up
-			case 39: rotate_z = 0; break; // right
-			case 40: rotate_x = 0; break; // down
+	function rotate() {
+		var drag = 0.99;
+		var minDelta = 0.05;
+
+		if (rotationVector.x < -minDelta || rotationVector.x > minDelta) {
+			rotationVector.x *= drag;
+		} else {
+			rotationVector.x = 0.0;
 		}
+
+		if (rotationVector.z < -minDelta || rotationVector.z > minDelta) {
+			rotationVector.z *= drag;
+		} else {
+			rotationVector.z = 0.0;
+		}
+
+		var angle  = 3.0/360.0*2.0*Math.PI; // 1 degrees
+		rotationQuaternion.setFromAxisAngle(rotationVector, angle);
+		curQuaternion = cube.quaternion;
+		curQuaternion.multiplyQuaternions(rotationQuaternion, curQuaternion);
+		curQuaternion.normalize();
+		cube.setRotationFromQuaternion(curQuaternion);
+		projcube.setRotationFromQuaternion(curQuaternion);
+
+		// this does something kind of interesting
+		// for (var i = 0; i < projcube.geometry.vertices.length; i++) {
+		// 	projcube.localToWorld(projcube.geometry.vertices[i]);
+		// };
+		// plain.geometry = proj_sphere_plain(projcube.geometry.clone());
 	}
 
 	function onKeyDown(event) {
 		switch (event.keyCode) {
-			case 37: rotate_z = 1.0; break; // left
-			case 38: rotate_x = 1.0; break; // up
-			case 39: rotate_z = -1.0; break; // right
-			case 40: rotate_x = -1.0; break; // down
+			case 37: rotationVector.z = -1.0; break; // left
+			case 38: rotationVector.x = 1.0; break; // up
+			case 39: rotationVector.z = 1.0; break; // right
+			case 40: rotationVector.x = -1.0; break; // down
 		}
-	}
-
-	function animate() {
-		stats.begin();
-		control.update();
-		rotate();
-		renderer.render(scene, camera);
-		requestAnimationFrame(animate);
-		stats.end();
 	}
 
 	function buildAxes(length) {
@@ -211,5 +207,18 @@ window.onload = function() {
 		var axis = new THREE.Line( geom, mat, THREE.LinePieces );
 
 		return axis;
+	}
+
+	function render() {
+		stats.begin();
+		renderer.render(scene, camera);
+		stats.end();
+		requestAnimationFrame(render);
+	}
+
+	function gameStep() {
+		control.update();
+		rotate();
+		setTimeout(gameStep, 1000/60); // 60 fps
 	}
 };
