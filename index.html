@@ -28,12 +28,13 @@
 			var fps_stats;
 
 			window.onload = function(e) {
-				scene = new Spheye(window);
 
 				fps_stats = new Stats();
 				fps_stats.setMode(2);
 				document.body.appendChild(fps_stats.domElement);
 				document.getElementById("stats").style.position = "absolute";
+
+				scene = new Spheye(window);
 
 				document.addEventListener("keydown", function(event) { scene.key_down(event);}, false);
 				update();
