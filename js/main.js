@@ -1,59 +1,154 @@
+
 window.onload = function() {
-	// fps display
-	var stats = new Stats();
-	stats.setMode(2);
-	document.body.appendChild(stats.domElement);
-	document.getElementById("stats").style.position = "absolute";
 
-	// keyboard input handlers
-	document.addEventListener("keydown", onKeyDown);
+	// globals (gl_)
+	var gl_scene;
+	var gl_renderer;
+	var gl_camera;
+	var gl_controls;
+	var gl_fps_stats;
+	var gl_rotation_vector;
+	var gl_rotation_quaternion;
+	var gl_sphere_radius;
 
-	var renderer, scene, camera, control, meshMaterial;
-	renderer = new THREE.WebGLRenderer({antialias: true});
-	document.body.appendChild( renderer.domElement );
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	init();
+	init_projection();
 
-	scene = new THREE.Scene();
+	scene_render();
+	scene_update();
 
-	size = 10;
-	var box = new THREE.BoxGeometry(size, size, size, size, size, size);
-	for (var i = 0; i < box.faces.length; i++) {
-    	box.faces[i].color.setHex(i/box.faces.length * 0xffffff);
+	////////////////////////////////////////////////////////////////////////////
+	// Setup
+	////////////////////////////////////////////////////////////////////////////
+	function init() {
+		// init scene
+		gl_scene = new THREE.Scene();
+
+		// init renderer
+		gl_renderer = new THREE.WebGLRenderer({antialias: true});
+		document.body.appendChild(gl_renderer.domElement);
+		gl_renderer.setSize(window.innerWidth, window.innerHeight);
+
+		// init camera
+		gl_camera = new THREE.PerspectiveCamera(45, (window.innerWidth/window.innerHeight), 1, 10000);
+		gl_camera.position.set(-5, 100, -100);
+		gl_camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+		// init controls
+		gl_controls = new THREE.TrackballControls(gl_camera);
+		gl_controls.rotateSpeed = 1.0;
+		gl_controls.zoomSpeed = 0.2;
+		gl_controls.panSpeed = 0.8;
+		gl_controls.noZoom = false;
+		gl_controls.noPan = false;
+		gl_controls.staticMoving = true;
+		gl_controls.dynamicDampingFactor = 0.3;
+
+		// init fps counter
+		gl_fps_stats = new Stats();
+		gl_fps_stats.setMode(2);
+		document.body.appendChild(gl_fps_stats.domElement);
+		document.getElementById("stats").style.position = "absolute";
+
+		// add keyboard input handlers
+		document.addEventListener("keydown", on_key_down);
+
+		// init sphere rotation state
+		gl_rotation_vector = new THREE.Vector3(0, 0, 0);
+		gl_rotation_quaternion = new THREE.Quaternion();
+
+		// init sphere properties
+		gl_sphere_radius = 10;
 	}
-	var mat = new THREE.MeshBasicMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
-	var cube = new THREE.Mesh(box,mat);
-	cube.position.set(0, size, 0);
-	cube.matrixAutoUpdate = true;
-	scene.add(cube);
 
-	var projcubegeom = proj_cube_sphere(cube.geometry.clone(), size);
-	var projcubemat = cube.material.clone();
-	projcubemat.transparent = true;
-	projcubemat.opacity = 0.5;
 
-	var projcube = new THREE.Mesh(projcubegeom, projcubemat);
-	projcube.position.set(0, size, 0);
-	projcube.matrixAutoUpdate = true;
-	scene.add(projcube);
+	////////////////////////////////////////////////////////////////////////////
+	// Main Processing
+	////////////////////////////////////////////////////////////////////////////
 
-	scene.add(buildAxes(1000));
-	var sphere_radius = 10;
+	function scene_render() {
+		gl_fps_stats.begin();
+		gl_renderer.render(gl_scene, gl_camera);
+		gl_fps_stats.end();
 
-	var plaingeom = proj_sphere_plain(projcube.geometry.clone());
-	plainmat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
-	plainmat.opacity = 1;
-	var plain = new THREE.Mesh(plaingeom, plainmat);
-	plain.matrixAutoUpdate = true;
-	plain.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI);
-	scene.add(plain);
+		requestAnimationFrame(scene_render);
+	}
 
-	var rotationQuaternion = new THREE.Quaternion();
-	var rotationVector = new THREE.Vector3(0, 0, 0);
+	function scene_update() {
+		gl_controls.update();
+		rotate();
+		setTimeout(scene_update, 1000/60); // 60 fps
+	}
 
-	camera();
-	controls();
-	gameStep();
-	render();
+	function on_key_down(event) {
+		switch (event.keyCode) {
+			case 37: gl_rotation_vector.z = -1.0; break; // left
+			case 38: gl_rotation_vector.x = 1.0; break; // up
+			case 39: gl_rotation_vector.z = 1.0; break; // right
+			case 40: gl_rotation_vector.x = -1.0; break; // down
+		}
+	}
+
+	function rotate() {
+		var drag = 0.99;
+		var minDelta = 0.05;
+		var angle  = 3.0/360.0*2.0*Math.PI;
+
+		vec = gl_rotation_vector;
+		vec.x = (vec.x < -minDelta || vec.x > minDelta) ? vec.x*drag : 0.0;
+		vec.z = (vec.z < -minDelta || vec.z > minDelta) ? vec.z*drag : 0.0;
+
+		gl_rotation_quaternion.setFromAxisAngle(vec, angle);
+		curQuaternion = cube.quaternion;
+		curQuaternion.multiplyQuaternions(gl_rotation_quaternion, curQuaternion);
+		curQuaternion.normalize();
+		cube.setRotationFromQuaternion(curQuaternion);
+		projcube.setRotationFromQuaternion(curQuaternion);
+
+		projcube.updateMatrixWorld();
+
+		// console.log(projcube.vertices);
+		// this does something kind of interesting
+		// for (var i = 0; i < projcube.geometry.vertices.length; i++) {
+		// 	projcube.localToWorld(projcube.geometry.vertices[i]);
+		// };
+		// plain.geometry = proj_sphere_plain(projcube.geometry.clone());
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	// Projection Rendering
+	////////////////////////////////////////////////////////////////////////////
+
+	function init_projection() {
+		size = 10;
+		var box = new THREE.BoxGeometry(size, size, size, size, size, size);
+		for (var i = 0; i < box.faces.length; i++) {
+	    	box.faces[i].color.setHex(i/box.faces.length * 0xffffff);
+		}
+		var mat = new THREE.MeshBasicMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
+		var cube = new THREE.Mesh(box,mat);
+		cube.position.set(0, size, 0);
+		cube.matrixAutoUpdate = true;
+		gl_scene.add(cube);
+
+		var projcubegeom = proj_cube_sphere(cube.geometry.clone(), size);
+		var projcubemat = cube.material.clone();
+		projcubemat.transparent = true;
+		projcubemat.opacity = 0.5;
+
+		var projcube = new THREE.Mesh(projcubegeom, projcubemat);
+		projcube.position.set(0, size, 0);
+		projcube.matrixAutoUpdate = true;
+		gl_scene.add(projcube);
+
+		var plaingeom = proj_sphere_plain(projcube.geometry.clone());
+		plainmat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+		plainmat.opacity = 1;
+		var plain = new THREE.Mesh(plaingeom, plainmat);
+		plain.matrixAutoUpdate = true;
+		plain.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI);
+		gl_scene.add(plain);
+	}
 
 	function proj_sphere_plain(geom) {
 
@@ -62,15 +157,15 @@ window.onload = function() {
 		for (j = 0; j < vertices.length; ++j) {
 			vertex = vertices[j];
 			x = vertex.x;
-			y = vertex.y + sphere_radius;
+			y = vertex.y + gl_sphere_radius;
 			z = vertex.z;
 
 			if (Math.floor(x+0.4999) === 0 && Math.floor(z+0.4999) === 0) {
 				continue;
 			}
 
-			phi = Math.atan2(Math.sqrt(x*x+z*z), 2*sphere_radius-y);
-			r = 2*sphere_radius*Math.tan(phi);
+			phi = Math.atan2(Math.sqrt(x*x+z*z), 2*gl_sphere_radius-y);
+			r = 2*gl_sphere_radius*Math.tan(phi);
 
 			theta = Math.atan2(x, z);
 			a = r * Math.sin(theta);
@@ -109,7 +204,7 @@ window.onload = function() {
 	function create_sphere(radius) {
 		geometry = new THREE.SphereGeometry(radius, 100, 100);
 		for ( var i = 0; i < geometry.faces.length; i ++ ) {
-    		geometry.faces[ i ].color.setHex( i/geometry.faces.length * 0xffffff );
+			geometry.faces[ i ].color.setHex( i/geometry.faces.length * 0xffffff );
 		}
 		var material = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
 		material.transparent = true;
@@ -118,106 +213,5 @@ window.onload = function() {
 		sphere.position.set(0, radius, 0);
 		sphere.geometry.mergeVertices();
 		return sphere;
-	}
-
-	function camera() {
-		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.set(-5, 100, -100);
-		camera.lookAt( new THREE.Vector3(0, 0, 0) );
-	}
-
-	function controls() {
-		control = new THREE.TrackballControls( camera );
-		control.rotateSpeed = 1.0;
-		control.zoomSpeed = 0.2;
-		control.panSpeed = 0.8;
-		control.noZoom = false;
-		control.noPan = false;
-		control.staticMoving = true;
-		control.dynamicDampingFactor = 0.3;
-	}
-
-	function rotate() {
-		var drag = 0.99;
-		var minDelta = 0.05;
-
-		if (rotationVector.x < -minDelta || rotationVector.x > minDelta) {
-			rotationVector.x *= drag;
-		} else {
-			rotationVector.x = 0.0;
-		}
-
-		if (rotationVector.z < -minDelta || rotationVector.z > minDelta) {
-			rotationVector.z *= drag;
-		} else {
-			rotationVector.z = 0.0;
-		}
-
-		var angle  = 3.0/360.0*2.0*Math.PI; // 1 degrees
-		rotationQuaternion.setFromAxisAngle(rotationVector, angle);
-		curQuaternion = cube.quaternion;
-		curQuaternion.multiplyQuaternions(rotationQuaternion, curQuaternion);
-		curQuaternion.normalize();
-		cube.setRotationFromQuaternion(curQuaternion);
-		projcube.setRotationFromQuaternion(curQuaternion);
-
-		// this does something kind of interesting
-		// for (var i = 0; i < projcube.geometry.vertices.length; i++) {
-		// 	projcube.localToWorld(projcube.geometry.vertices[i]);
-		// };
-		// plain.geometry = proj_sphere_plain(projcube.geometry.clone());
-	}
-
-	function onKeyDown(event) {
-		switch (event.keyCode) {
-			case 37: rotationVector.z = -1.0; break; // left
-			case 38: rotationVector.x = 1.0; break; // up
-			case 39: rotationVector.z = 1.0; break; // right
-			case 40: rotationVector.x = -1.0; break; // down
-		}
-	}
-
-	function buildAxes(length) {
-		var axes = new THREE.Object3D();
-
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(length, 0, 0), 0xFF0000, false)); // +X
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(-length, 0, 0), 0xFF0000, true)); // -X
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, length, 0), 0x00FF00, false)); // +Y
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -length, 0), 0x00FF00, true)); // -Y
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, length), 0x0000FF, false)); // +Z
-		axes.add(buildAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -length), 0x0000FF, true)); // -Z
-
-		return axes;
-	}
-
-	function buildAxis(src, dst, colorHex, dashed) {
-		var geom = new THREE.Geometry(), mat;
-
-		if(dashed) {
-			mat = new THREE.LineDashedMaterial({ linewidth: 3, color: colorHex, dashSize: 3, gapSize: 3 });
-		} else {
-			mat = new THREE.LineBasicMaterial({ linewidth: 3, color: colorHex });
-		}
-
-		geom.vertices.push( src.clone() );
-		geom.vertices.push( dst.clone() );
-		geom.computeLineDistances(); // This one is SUPER important, otherwise dashed lines will appear as simple plain lines
-
-		var axis = new THREE.Line( geom, mat, THREE.LinePieces );
-
-		return axis;
-	}
-
-	function render() {
-		stats.begin();
-		renderer.render(scene, camera);
-		stats.end();
-		requestAnimationFrame(render);
-	}
-
-	function gameStep() {
-		control.update();
-		rotate();
-		setTimeout(gameStep, 1000/60); // 60 fps
 	}
 };
