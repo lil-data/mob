@@ -18,11 +18,19 @@ window.onload = function() {
 
 	size = 10;
 	var box = new THREE.BoxGeometry(size, size, size, size, size, size);
+	var count;
 	for (var i = 0; i < box.faces.length; i++) {
     	box.faces[i].color.setHex(i/box.faces.length * 0xffffff);
+    	box.faces[i].materialIndex = 0;
 	}
-	var mat = new THREE.MeshBasicMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
-	var cube = new THREE.Mesh(box,mat);
+	var eyeTexture = new THREE.ImageUtils.loadTexture("img/eye.png");
+	eyeTexture.wrapS = THREE.MirroredRepeatWrapping;
+	eyeTexture.wrapT = THREE.MirroredRepeatWrapping;
+	eyeTexture.repeat.set(8,8);
+	var eyeMat = [new THREE.MeshBasicMaterial({ map: eyeTexture })];
+	var eye = new THREE.MeshFaceMaterial(eyeMat);
+
+	var cube = new THREE.Mesh(box,eye);
 	cube.position.set(0, size, 0);
 	cube.matrixAutoUpdate = true;
 	scene.add(cube);
@@ -37,13 +45,10 @@ window.onload = function() {
 	projcube.matrixAutoUpdate = true;
 	scene.add(projcube);
 
-	scene.add(buildAxes(1000));
 	var sphere_radius = 10;
 
 	var plaingeom = proj_sphere_plain(projcube.geometry.clone());
-	plainmat = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
-	plainmat.opacity = 1;
-	var plain = new THREE.Mesh(plaingeom, plainmat);
+	var plain = new THREE.Mesh(plaingeom, eye);
 	plain.matrixAutoUpdate = true;
 	plain.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI);
 	scene.add(plain);
