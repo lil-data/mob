@@ -4,13 +4,6 @@
 		<title>drawing the coordinate axes with three.js</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
-		<script type="text/javascript" src="./js/TrackballControls.js"></script>
-		<script type="text/javascript" src="./js/stats.min.js"></script>
-		<script type="text/javascript" src="./js/main.js"></script>
-	</head>
-	<body>
 		<style type="text/css">
 			* {
 				padding: 0;
@@ -23,5 +16,44 @@
 				cursor: move;
 			}
 		</style>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+		<script type="text/javascript" src="./js/TrackballControls.js"></script>
+		<script type="text/javascript" src="./js/stats.min.js"></script>
+
+		<script type="text/javascript" src="./js/main.js"></script>
+		<script type="text/javascript">
+
+			var scene;
+			var fps_stats;
+
+			window.onload = function(e) {
+				scene = new Spheye(window);
+
+				fps_stats = new Stats();
+				fps_stats.setMode(2);
+				document.body.appendChild(fps_stats.domElement);
+				document.getElementById("stats").style.position = "absolute";
+
+				document.addEventListener("keydown", function(event) { scene.key_down(event)}, false);
+				update();
+				render();
+			};
+
+			function render() {
+				fps_stats.begin();
+				scene.render();
+				fps_stats.end();
+				requestAnimationFrame(render);
+			}
+
+			function update() {
+				scene.update();
+				setTimeout(update, 1000/60); // 60 fps
+			}
+
+		</script>
+	</head>
+	<body>
 	</body>
 </html>
