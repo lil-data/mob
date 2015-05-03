@@ -35,7 +35,7 @@
 				document.body.appendChild(fps_stats.domElement);
 				document.getElementById("stats").style.position = "absolute";
 
-				document.addEventListener("keydown", function(event) { scene.key_down(event)}, false);
+				document.addEventListener("keydown", function(event) { scene.key_down(event);}, false);
 				update();
 				render();
 			};
