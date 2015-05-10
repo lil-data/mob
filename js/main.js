@@ -42,25 +42,40 @@
 
     for (var i = 0; i < box.faces.length; i++) {
        box.faces[i].color.setHex(i/box.faces.length * 0xffffff);
-       // box.faces[i].materialIndex = 0;
+       box.faces[i].materialIndex = 0;
     }
 
-    var eyeTexture = new THREE.ImageUtils.loadTexture("img/eye.png");
+    var eyeTexture = new THREE.ImageUtils.loadTexture("img/map.jpg");
     eyeTexture.wrapS = THREE.MirroredRepeatWrapping;
     eyeTexture.wrapT = THREE.MirroredRepeatWrapping;
-    eyeTexture.repeat.set(8,8);
+    eyeTexture.repeat.set(1,1);
+    eyeTexture.mapping = THREE.CubeReflectionMapping;
     var eyeMat = [new THREE.MeshBasicMaterial({ map: eyeTexture })];
-    // var eye = new THREE.MeshFaceMaterial(eyeMat);
-    var eye = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
+    var eye = new THREE.MeshFaceMaterial(eyeMat);
+    // var eye = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors } );
 
     var cube = new THREE.Mesh(box, eye);
 
     // sphere
+
+    var eyeTexture2 = new THREE.ImageUtils.loadTexture("img/map.jpg");
+    // eyeTexture2.wrapS = THREE.MirroredRepeatWrapping;
+    // eyeTexture2.wrapT = THREE.MirroredRepeatWrapping;
+    // eyeTexture2.repeat.set(1,1);
+    // eyeTexture2.mapping = THREE.SphericalReflectionMapping;
+    // var eyeMat2 = [new THREE.MeshBasicMaterial({ map: eyeTexture2 })];
+    var eyeMat2 = new THREE.MeshBasicMaterial({ map: eyeTexture2 });
+    // var eye2 = new THREE.MeshFaceMaterial(eyeMat2);
+
+    // this.sphere = new THREE.Mesh(
+    //     this.get_sphere_geom_from_cube(cube.geometry.clone(), this.radius),
+    //     eyeMat2);
     this.sphere = new THREE.Mesh(
-        this.get_sphere_geom_from_cube(cube.geometry.clone(), this.radius),
-        cube.material.clone());
+        new THREE.SphereGeometry(20,20,20),
+        eyeMat2);
     this.sphere.position.set(0, this.radius, 0);
     this.sphere.geometry.mergeVertices();
+    this.sphere.visible = false;
     this.scene.add(this.sphere);
 
     // plane
@@ -149,7 +164,12 @@
     }
 
     this.plane.geometry = this.get_plane_geom_from_sphere(sphere_geom);
-  }
+  };
+
+  Spheye.prototype.shuffle = function(o){
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
 
   Spheye.prototype.key_down = function(event) {
     switch (event.keyCode) {
